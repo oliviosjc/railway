@@ -1,0 +1,72 @@
+@using RailwayManager.Models
+@using RailwayManager.Services
+@inject RailwayService RailwayService
+
+<div class="railway-line @GetDropTargetClass()"
+     @ondragover="@HandleDragOver"
+     @ondragover:preventDefault="true"
+     @ondrop="@HandleDrop"
+     @ondrop:preventDefault="true">
+    <div class="line-header" style="background-color: @Line.Color;">
+        <h3>@Line.Name</h3>
+        <span class="train-count">@Line.Trains.Count trens</span>
+    </div>
+    <div class="line-track">
+        <div class="track-visual"></div>
+        <div class="trains-container">
+            @foreach (var train in Line.Trains)
+            {
+                <TrainComponent Train="train" 
+                              OnDragStart="@HandleTrainDragStart"
+                              OnDragEnd="@HandleTrainDragEnd"
+                              OnClick="@OnTrainClick" />
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public RailwayLine Line { get; set; } = null!;
+    [Parameter] public Train? DraggingTrain { get; set; }
+    [Parameter] public EventCallback<Train> OnTrainDragStart { get; set; }
+    [Parameter] public EventCallback OnTrainDragEnd { get; set; }
+    [Parameter] public EventCallback<Train> OnTrainClick { get; set; }
+    
+    private bool _isDragOver = false;
+    
+    private async Task HandleTrainDragStart(Train train)
+    {
+        await OnTrainDragStart.InvokeAsync(train);
+    }
+    
+    private async Task HandleTrainDragEnd()
+    {
+        await OnTrainDragEnd.InvokeAsync();
+    }
+    
+    private void HandleDragOver(DragEventArgs e)
+    {
+        if (DraggingTrain != null && CanAcceptTrain())
+        {
+            _isDragOver = true;
+        }
+    }
+    
+    private async Task HandleDrop(DragEventArgs e)
+    {
+        _isDragOver = false;
+        
+        if (DraggingTrain != null && CanAcceptTrain())
+        {
+            RailwayService.MoveTrain(DraggingTrain.Id, DraggingTrain.CurrentLineId, Line.Id);
+        }
+    }
+    
+    private bool CanAcceptTrain()
+    {
+        // Aceita qualquer trem de qualquer linha
+        return DraggingTrain != null;
+    }
+    
+    private string GetDropTargetClass() => _isDragOver && CanAcceptTrain() ? "drag-over" : "";
+}

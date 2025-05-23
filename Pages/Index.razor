@@ -1,0 +1,90 @@
+@page "/"
+@using RailwayManager.Models
+@using RailwayManager.Services
+@using RailwayManager.Components
+@inject RailwayService RailwayService
+@implements IDisposable
+
+<PageTitle>Railway Manager - MVP</PageTitle>
+
+<div class="container">
+    <h1>Sistema de Gerenciamento Ferroviário</h1>
+    
+    <div class="stats">
+        <div class="stat-item">
+            <span class="stat-label">Total de Linhas:</span>
+            <span class="stat-value">@_lines.Count</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Total de Trens:</span>
+            <span class="stat-value">@_lines.Sum(l => l.Trains.Count)</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Total de Vagões:</span>
+            <span class="stat-value">@_lines.Sum(l => l.Trains.Sum(t => t.Wagons))</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Média Vagões/Trem:</span>
+            <span class="stat-value">@((_lines.Sum(l => l.Trains.Count) > 0 ? _lines.Sum(l => l.Trains.Sum(t => t.Wagons)) / _lines.Sum(l => l.Trains.Count) : 0))</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-label">Trem Selecionado:</span>
+            <span class="stat-value">@(_draggingTrain?.Code ?? "Nenhum")</span>
+        </div>
+    </div>
+    
+    <div class="railway-system">
+        @foreach (var line in _lines)
+        {
+            <RailwayLineComponent Line="line" 
+                                DraggingTrain="_draggingTrain"
+                                OnTrainDragStart="HandleTrainDragStart"
+                                OnTrainDragEnd="HandleTrainDragEnd"
+                                OnTrainClick="HandleTrainClick" />
+        }
+    </div>
+</div>
+
+<TrainDetailsModal Train="_selectedTrain" 
+                  IsVisible="_showModal"
+                  OnClose="CloseModal" />
+
+@code {
+    private List<RailwayLine> _lines = new();
+    private Train? _draggingTrain;
+    private Train? _selectedTrain;
+    private bool _showModal = false;
+    
+    protected override void OnInitialized()
+    {
+        _lines = RailwayService.GetLines();
+        RailwayService.OnStateChanged += StateHasChanged;
+    }
+    
+    private void HandleTrainDragStart(Train train)
+    {
+        _draggingTrain = train;
+    }
+    
+    private void HandleTrainDragEnd()
+    {
+        _draggingTrain = null;
+    }
+    
+    private void HandleTrainClick(Train train)
+    {
+        _selectedTrain = train;
+        _showModal = true;
+    }
+    
+    private void CloseModal()
+    {
+        _showModal = false;
+        _selectedTrain = null;
+    }
+    
+    public void Dispose()
+    {
+        RailwayService.OnStateChanged -= StateHasChanged;
+    }
+}

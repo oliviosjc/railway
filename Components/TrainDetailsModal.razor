@@ -1,0 +1,85 @@
+@using RailwayManager.Models
+
+@if (IsVisible && Train != null)
+{
+    <div class="modal-backdrop" @onclick="Close">
+        <div class="modal-content" @onclick:stopPropagation="true">
+            <div class="modal-header">
+                <h2>Detalhes do Trem @Train.Code</h2>
+                <button class="close-button" @onclick="Close">✕</button>
+            </div>
+            
+            <div class="modal-info">
+                <div class="info-row">
+                    <span class="info-label">Tipo:</span>
+                    <span class="info-value">@Train.Type</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Linha Atual:</span>
+                    <span class="info-value">Linha @Train.CurrentLineId</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Total de Vagões:</span>
+                    <span class="info-value">@Train.Wagons</span>
+                </div>
+            </div>
+            
+            <div class="wagon-list">
+                <h3>Vagões</h3>
+                <div class="wagon-grid">
+                    @foreach (var wagon in Train.WagonList)
+                    {
+                        <div class="wagon-card @GetStatusClass(wagon.Status)">
+                            <div class="wagon-header">
+                                <span class="wagon-code">@wagon.Code</span>
+                                <span class="wagon-status">@wagon.Status</span>
+                            </div>
+                            <div class="wagon-details">
+                                <div class="wagon-detail">
+                                    <span class="detail-label">Tipo:</span>
+                                    <span class="detail-value">@wagon.Type</span>
+                                </div>
+                                <div class="wagon-detail">
+                                    <span class="detail-label">Carga:</span>
+                                    <span class="detail-value">@wagon.Cargo</span>
+                                </div>
+                                <div class="wagon-detail">
+                                    <span class="detail-label">Peso:</span>
+                                    <span class="detail-value">@wagon.Weight.ToString("F1") ton</span>
+                                </div>
+                                <div class="wagon-detail">
+                                    <span class="detail-label">Capacidade:</span>
+                                    <span class="detail-value">@wagon.Capacity.ToString("F1") ton</span>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public Train? Train { get; set; }
+    [Parameter] public bool IsVisible { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+    
+    private string GetStatusClass(string status)
+    {
+        return status switch
+        {
+            "Operacional" => "status-operational",
+            "Manutenção" => "status-maintenance",
+            "Carregado" => "status-loaded",
+            "Descarregando" => "status-unloading",
+            "Em Trânsito" => "status-transit",
+            _ => ""
+        };
+    }
+}

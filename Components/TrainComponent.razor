@@ -1,0 +1,45 @@
+@using RailwayManager.Models
+
+<div class="train @GetDraggingClass()" 
+     draggable="true"
+     @ondragstart="@(() => HandleDragStart())"
+     @ondragend="@HandleDragEnd"
+     @onclick="@HandleClick"
+     style="background-color: @Train.Color;">
+    <div class="train-code">@Train.Code</div>
+    <div class="train-info">
+        <span>@Train.Type</span>
+        <span>@Train.Wagons vag.</span>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Train Train { get; set; } = null!;
+    [Parameter] public EventCallback<Train> OnDragStart { get; set; }
+    [Parameter] public EventCallback OnDragEnd { get; set; }
+    [Parameter] public EventCallback<Train> OnClick { get; set; }
+    
+    private bool _isDragging = false;
+    
+    private async Task HandleDragStart()
+    {
+        _isDragging = true;
+        await OnDragStart.InvokeAsync(Train);
+    }
+    
+    private async Task HandleDragEnd()
+    {
+        _isDragging = false;
+        await OnDragEnd.InvokeAsync();
+    }
+    
+    private async Task HandleClick()
+    {
+        if (!_isDragging)
+        {
+            await OnClick.InvokeAsync(Train);
+        }
+    }
+    
+    private string GetDraggingClass() => _isDragging ? "dragging" : "";
+}
