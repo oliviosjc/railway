@@ -1,0 +1,13 @@
+version: '3.8'
+
+services:
+  railway-manager:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: railway-manager
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
