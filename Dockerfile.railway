@@ -24,13 +24,16 @@ RUN rm -rf ./*
 # Copy published files from build stage
 COPY --from=publish /app/publish/wwwroot .
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/nginx.conf
+# Copy nginx configuration template
+COPY nginx.conf /etc/nginx/nginx.template.conf
 
-# Railway expects port 8080 by default
+# Install envsubst
+RUN apk add --no-cache gettext
+
+# Railway default port
+ENV PORT=8080
 EXPOSE 8080
 
-# Replace nginx port at runtime and start
-CMD sed -i 's/listen 80;/listen 8080;/g' /etc/nginx/nginx.conf && \
-    sed -i 's/listen \[::\]:80;/listen [::]:8080;/g' /etc/nginx/nginx.conf && \
+# Start nginx with dynamic port
+CMD envsubst '${PORT}' < /etc/nginx/nginx.template.conf > /etc/nginx/nginx.conf && \
     nginx -g 'daemon off;'
