@@ -27,5 +27,9 @@ COPY --from=publish /app/publish/wwwroot .
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Railway uses PORT environment variable
+ENV PORT=80
 EXPOSE 80
+
+# Start nginx
 CMD ["nginx", "-g", "daemon off;"]
