@@ -24,16 +24,22 @@ RUN rm -rf ./*
 # Copy published files from build stage
 COPY --from=publish /app/publish/wwwroot .
 
-# Copy nginx configuration template
-COPY nginx.template.conf /etc/nginx/nginx.template.conf
+# Create nginx config that listens on port 8080
+RUN echo 'events { } \
+http { \
+    include /etc/nginx/mime.types; \
+    server { \
+        listen 8080; \
+        root /usr/share/nginx/html; \
+        index index.html; \
+        location / { \
+            try_files $uri $uri/ /index.html =404; \
+        } \
+        location ~* \.wasm$ { \
+            add_header Content-Type "application/wasm"; \
+        } \
+    } \
+}' > /etc/nginx/nginx.conf
 
-# Install envsubst
-RUN apk add --no-cache gettext
-
-# Railway default port
-ENV PORT=8080
 EXPOSE 8080
-
-# Start nginx with dynamic port
-CMD envsubst '${PORT}' < /etc/nginx/nginx.template.conf > /etc/nginx/nginx.conf && \
-    nginx -g 'daemon off;'
+CMD ["nginx", "-g", "daemon off;"]
